@@ -9,13 +9,15 @@ OUTPUT_DIR = "release"
 DIST_DIR = "dist"
 BUILD_DIR = "build"
 
+
 def build():
     print("Building EXE...")
-    
+
     # 0. Ensure logo.ico is generated from logo.jpg for Windows icon embedding
     if os.path.exists("logo.jpg"):
         try:
             from PIL import Image
+
             img = Image.open("logo.jpg")
             img.save("logo.ico", format="ICO", sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
             print("Successfully prepared logo.ico with multi-resolution icon sizes.")
@@ -34,59 +36,63 @@ def build():
             shutil.rmtree(BUILD_DIR)
         except Exception as e:
             print(f"Warning: Failed to clean {BUILD_DIR}: {e}")
-    
+
     # PyInstaller arguments
     pyi_args = [
         MAIN_SCRIPT,
-        '--name=%s' % APP_NAME,
-        '--onedir',
-        '--windowed',  # Hide console
-        '--noconfirm',
-        '--clean',
-        f'--distpath={OUTPUT_DIR}',
-        f'--workpath={BUILD_DIR}',
+        "--name=%s" % APP_NAME,
+        "--onedir",
+        "--windowed",  # Hide console
+        "--noconfirm",
+        "--clean",
+        f"--distpath={OUTPUT_DIR}",
+        f"--workpath={BUILD_DIR}",
         # Hidden imports
-        '--hidden-import=vosk',
-        '--hidden-import=pyaudio',
-        '--hidden-import=requests',
-        '--hidden-import=flet',
-        '--hidden-import=flet_desktop',
-        '--hidden-import=flet_desktop.version',
-        '--hidden-import=flet_desktop.win_taskbar',
+        "--hidden-import=vosk",
+        "--hidden-import=pyaudio",
+        "--hidden-import=requests",
+        "--hidden-import=flet",
+        "--hidden-import=flet_desktop",
+        "--hidden-import=flet_desktop.version",
+        "--hidden-import=flet_desktop.win_taskbar",
         # Collect Flet packages and data
-        '--collect-all=flet',
-        '--collect-all=flet_desktop',
+        "--collect-all=flet",
+        "--collect-all=flet_desktop",
         # Collect all vosk C-extensions, DLLs and data
-        '--collect-all=vosk',
+        "--collect-all=vosk",
         # Embed logo assets
-        f'--add-data=logo.jpg{os.pathsep}.',
+        f"--add-data=logo.jpg{os.pathsep}.",
     ]
 
     if os.path.exists("logo.ico"):
-        pyi_args.extend([
-            '--icon=logo.ico',
-            f'--add-data=logo.ico{os.pathsep}.',
-        ])
+        pyi_args.extend(
+            [
+                "--icon=logo.ico",
+                f"--add-data=logo.ico{os.pathsep}.",
+            ]
+        )
 
     # Exclude Tkinter and unused heavy GUI/Scientific packages
-    pyi_args.extend([
-        '--exclude-module=tkinter',
-        '--exclude-module=_tkinter',
-        '--exclude-module=customtkinter',
-        '--exclude-module=ttkbootstrap',
-        '--exclude-module=torch',
-        '--exclude-module=matplotlib',
-        '--exclude-module=scipy',
-        '--exclude-module=PySide6',
-        '--exclude-module=pandas',
-        '--exclude-module=cv2',
-        '--exclude-module=IPython',
-        '--exclude-module=jupyter',
-    ])
+    pyi_args.extend(
+        [
+            "--exclude-module=tkinter",
+            "--exclude-module=_tkinter",
+            "--exclude-module=customtkinter",
+            "--exclude-module=ttkbootstrap",
+            "--exclude-module=torch",
+            "--exclude-module=matplotlib",
+            "--exclude-module=scipy",
+            "--exclude-module=PySide6",
+            "--exclude-module=pandas",
+            "--exclude-module=cv2",
+            "--exclude-module=IPython",
+            "--exclude-module=jupyter",
+        ]
+    )
 
     # 2. Run PyInstaller
     PyInstaller.__main__.run(pyi_args)
-    
+
     # 3. Handle Assets & Model Copying
     exe_dir = os.path.join(OUTPUT_DIR, APP_NAME)
     internal_dir = os.path.join(exe_dir, "_internal")
@@ -94,6 +100,7 @@ def build():
     # Ensure vosk package with all DLLs exists in _internal\vosk for open_dll()
     try:
         import vosk
+
         vosk_src = os.path.dirname(vosk.__file__)
         vosk_dst = os.path.join(internal_dir, "vosk")
         print(f"Ensuring full vosk binaries in {vosk_dst}...")
@@ -104,6 +111,7 @@ def build():
     # Ensure flet_desktop package exists in _internal\flet_desktop
     try:
         import flet_desktop
+
         flet_desktop_src = os.path.dirname(flet_desktop.__file__)
         flet_desktop_dst = os.path.join(internal_dir, "flet_desktop")
         print(f"Ensuring flet_desktop in {flet_desktop_dst}...")
@@ -116,6 +124,7 @@ def build():
         import flet_desktop
         import sys
         from pathlib import Path
+
         client_dir = flet_desktop.ensure_client_cached()
         flet_client_src = Path(client_dir) / "flet"
         has_client = False
@@ -136,7 +145,7 @@ def build():
             print(f"Warning: Flet View executable not found in {flet_client_src}")
     except Exception as e:
         print(f"Warning: Failed to bundle flet_view client: {e}")
-    
+
     # Copy logo files to release directory
     for logo_name in ["logo.jpg", "logo.ico"]:
         if os.path.exists(logo_name):
@@ -154,6 +163,7 @@ def build():
         print("Model not found locally. It will be downloaded on first run by the app.")
 
     print(f"Build complete. Application is in {exe_dir}")
+
 
 if __name__ == "__main__":
     build()

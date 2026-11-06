@@ -5,10 +5,11 @@ from urllib3.util import Retry
 import logging
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Global reusable session
 _session = None
+
 
 def get_session():
     global _session
@@ -20,6 +21,7 @@ def get_session():
         _session.mount("http://", adapter)
     return _session
 
+
 def sanitize_telegram_error(text: str, token: str = None) -> str:
     """Masks bot token in error messages and URLs to prevent credential leakage."""
     if not text:
@@ -30,8 +32,9 @@ def sanitize_telegram_error(text: str, token: str = None) -> str:
         res = res.replace(str(token), "***REDACTED***")
     # 2. General regex replacement for Telegram bot token formats in URLs or logs
     # Handles single or repeated 'bot' prefixes (e.g. /bot123456:xxx or /botbot123456:xxx)
-    res = re.sub(r'(?:bot)+[0-9]+:[a-zA-Z0-9_-]+', 'bot***REDACTED***', res)
+    res = re.sub(r"(?:bot)+[0-9]+:[a-zA-Z0-9_-]+", "bot***REDACTED***", res)
     return res
+
 
 def send_telegram_alert(bot_token, chat_id, message, proxy=None):
     """
@@ -43,14 +46,11 @@ def send_telegram_alert(bot_token, chat_id, message, proxy=None):
         return False
 
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": message
-    }
-    
+    payload = {"chat_id": chat_id, "text": message}
+
     proxies = {"http": proxy, "https": proxy} if proxy else None
     session = get_session()
-    
+
     try:
         response = session.post(url, json=payload, timeout=10, proxies=proxies)
         if response.status_code != 200:
@@ -69,6 +69,7 @@ def send_telegram_alert(bot_token, chat_id, message, proxy=None):
         safe_msg = sanitize_telegram_error(str(e), token=bot_token)
         logging.error(f"Failed to send Telegram notification due to network error: {safe_msg}")
         return False
+
 
 if __name__ == "__main__":
     # Test block

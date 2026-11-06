@@ -1,0 +1,32 @@
+[tool.black]
+line-length = 120
+target-version = ['py310', 'py311', 'py312']
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | build
+  | release
+  | __pycache__
+  | vosk-model-small-cn-0.22
+)/
+'''
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+exclude = [
+    ".git",
+    ".venv",
+    "build",
+    "release",
+    "__pycache__",
+    "vosk-model-small-cn-0.22",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = [
+    "E501",  # Line length is handled by black
+    "E402",  # Module level import not at top of file (required for early PyInstaller frozen runtime guards)
+]

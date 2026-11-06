@@ -23,7 +23,7 @@ except ImportError:
 from notifier import send_telegram_alert
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Constants
 MODEL_NAME = "vosk-model-small-cn-0.22"
@@ -31,13 +31,15 @@ MODEL_URL = f"https://alphacephei.com/vosk/models/{MODEL_NAME}.zip"
 AUDIO_RATE = 16000
 CHUNK_SIZE = 4096
 
+
 def get_base_dir():
     """Returns application base directory, prioritizing _MEIPASS for PyInstaller read-only bundled assets."""
-    if hasattr(sys, '_MEIPASS'):
+    if hasattr(sys, "_MEIPASS"):
         return sys._MEIPASS
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, "frozen", False):
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.abspath(__file__))
+
 
 def get_data_dir():
     """
@@ -45,7 +47,7 @@ def get_data_dir():
     Ensures persistent storage is never directed into a temporary _MEIPASS folder.
     Falls back to user application data directory if installation path is read-only.
     """
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, "frozen", False):
         base = os.path.dirname(sys.executable)
     else:
         base = os.path.dirname(os.path.abspath(__file__))
@@ -59,12 +61,13 @@ def get_data_dir():
     except (OSError, PermissionError):
         pass
 
-    if os.name == 'nt':
+    if os.name == "nt":
         user_dir = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "VoiceAlert")
     else:
         user_dir = os.path.join(os.environ.get("XDG_DATA_HOME", os.path.expanduser("~/.local/share")), "VoiceAlert")
     os.makedirs(user_dir, exist_ok=True)
     return user_dir
+
 
 def is_valid_vosk_model(model_dir):
     """Verifies that the essential model files exist."""
@@ -76,10 +79,11 @@ def is_valid_vosk_model(model_dir):
     ]
     return all(os.path.exists(p) for p in required)
 
+
 def check_model_ready():
     """
     Checks if the Vosk speech recognition model is downloaded and structurally valid.
-    
+
     Returns:
         tuple[bool, str | None, str]: (is_ready, model_path, status_text)
     """
@@ -89,7 +93,7 @@ def check_model_ready():
         os.path.join(os.path.dirname(os.path.abspath(__file__)), MODEL_NAME),
         os.path.abspath(MODEL_NAME),
     ]
-    if hasattr(sys, '_MEIPASS'):
+    if hasattr(sys, "_MEIPASS"):
         candidates.append(os.path.join(sys._MEIPASS, MODEL_NAME))
 
     # Remove duplicates while preserving order
@@ -105,6 +109,7 @@ def check_model_ready():
 
     return False, None, "Not downloaded"
 
+
 def safe_extract_zip(zip_file, target_dir):
     """Safely extracts a ZIP archive preventing directory traversal (Zip Slip)."""
     resolved_target = os.path.realpath(target_dir)
@@ -112,7 +117,7 @@ def safe_extract_zip(zip_file, target_dir):
 
     with zipfile.ZipFile(zip_file, "r") as zf:
         if sys.version_info >= (3, 12):
-            zf.extractall(resolved_target, filter='data')
+            zf.extractall(resolved_target, filter="data")
         else:
             for member in zf.namelist():
                 member_path = os.path.realpath(os.path.join(resolved_target, member))
@@ -120,19 +125,21 @@ def safe_extract_zip(zip_file, target_dir):
                     raise ValueError(f"Path traversal detected in zip archive: {member}")
             zf.extractall(resolved_target)
 
+
 def download_model(proxy=None, on_progress=None, on_log=None, is_cancelled=None):
     """
     Downloads and extracts the Vosk model archive safely using a temporary staging directory.
-    
+
     Args:
         proxy (str): Optional HTTP/SOCKS proxy.
         on_progress (callable): callback(downloaded_bytes: int, total_bytes: int, percent: float)
         on_log (callable): callback(msg: str)
         is_cancelled (callable): callback() -> bool
-        
+
     Returns:
         tuple[bool, str]: (success, model_path_or_error)
     """
+
     def _log(msg):
         logging.info(msg)
         if on_log:
@@ -218,6 +225,7 @@ def download_model(proxy=None, on_progress=None, on_log=None, is_cancelled=None)
             except OSError:
                 pass
 
+
 class VoiceAlertSystem:
     def __init__(self, bot_token, chat_id, keywords, proxy=None, on_log=None, on_status_change=None):
         self.bot_token = bot_token
@@ -231,11 +239,11 @@ class VoiceAlertSystem:
         self.running = False
         self.thread = None
         self.model = None
-        
+
         # Cooldown management: keyword -> last alert timestamp
         self._last_alert_time = {}
         self._alert_cooldown = 5.0  # 5-second cooldown per keyword
-        
+
         # Asynchronous notification queue & worker
         self._alert_queue = queue.Queue()
         self._alert_worker_thread = None
@@ -257,11 +265,7 @@ class VoiceAlertSystem:
             return model_path
 
         self.log(f"Model not found. Downloading from {MODEL_URL}...")
-        success, res = download_model(
-            proxy=self.proxy,
-            on_log=self.log,
-            is_cancelled=lambda: not self.running
-        )
+        success, res = download_model(proxy=self.proxy, on_log=self.log, is_cancelled=lambda: not self.running)
         if success:
             self.log("Model setup complete.")
             return res
@@ -270,15 +274,15 @@ class VoiceAlertSystem:
     def load_model(self):
         if self.model:
             return True
-        
+
         if Model is None:
             self.log("Error: 'vosk' module is not installed. Please run: pip install vosk")
             return False
-        
+
         model_path = self.download_and_unpack_model()
         if not model_path:
             return False
-            
+
         try:
             self.log("Loading speech recognition model...")
             self.model = Model(model_path)
@@ -329,7 +333,7 @@ class VoiceAlertSystem:
         """Stops the detection loop and waits for thread cleanup."""
         if not self.running:
             return
-        
+
         self.running = False
         if self.thread and threading.current_thread() != self.thread:
             self.thread.join(timeout=3)
@@ -337,6 +341,7 @@ class VoiceAlertSystem:
 
     def _start_alert_worker(self):
         """Launches a dedicated thread for non-blocking Telegram notifications."""
+
         def alert_loop():
             while self.running or not self._alert_queue.empty():
                 try:
@@ -376,22 +381,26 @@ class VoiceAlertSystem:
         try:
             p = pyaudio.PyAudio()
             try:
-                stream = p.open(format=pyaudio.paInt16,
-                                channels=1,
-                                rate=AUDIO_RATE,
-                                input=True,
-                                frames_per_buffer=CHUNK_SIZE,
-                                stream_callback=callback)
+                stream = p.open(
+                    format=pyaudio.paInt16,
+                    channels=1,
+                    rate=AUDIO_RATE,
+                    input=True,
+                    frames_per_buffer=CHUNK_SIZE,
+                    stream_callback=callback,
+                )
             except Exception as e:
                 self.log(f"Error opening audio stream at {AUDIO_RATE}Hz: {e}")
-                self.log("Tip: Please check if your microphone is connected and authorized in Windows Privacy Settings.")
+                self.log(
+                    "Tip: Please check if your microphone is connected and authorized in Windows Privacy Settings."
+                )
                 return
 
             stream.start_stream()
             self.log("Listening for keywords...")
 
             rec = KaldiRecognizer(self.model, AUDIO_RATE)
-            
+
             while self.running:
                 if stream_status_flag[0] != 0:
                     status_code = stream_status_flag[0]
@@ -400,7 +409,7 @@ class VoiceAlertSystem:
 
                 try:
                     # Non-blocking get with timeout to allow checking self.running
-                    data = audio_queue.get(timeout=0.5) 
+                    data = audio_queue.get(timeout=0.5)
                 except queue.Empty:
                     continue
 
@@ -448,7 +457,7 @@ class VoiceAlertSystem:
         """
         if not text:
             return False
-        
+
         fired = False
         now = time.time()
         for keyword in self.keywords:
@@ -458,7 +467,7 @@ class VoiceAlertSystem:
                 if now - last_time < self._alert_cooldown:
                     continue
                 self._last_alert_time[keyword] = now
-                
+
                 msg = f"Keyword Detected: {keyword}"
                 self.log(msg)
                 # Enqueue to background alert worker (non-blocking)
@@ -466,6 +475,7 @@ class VoiceAlertSystem:
                 fired = True
 
         return fired
+
 
 if __name__ == "__main__":
     print("Use gui.py to run")

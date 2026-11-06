@@ -13,10 +13,12 @@ import json
 import threading
 import time
 import flet as ft
+
 try:
     import flet_desktop
 except ImportError:
     flet_desktop = None
+
 
 def is_valid_flet_view_dir(path):
     """Checks whether the directory contains a platform-valid Flet client executable or bundle."""
@@ -34,6 +36,7 @@ def is_valid_flet_view_dir(path):
     else:  # Linux / Unix
         return os.path.isfile(os.path.join(path, "flet"))
 
+
 # Configure Flet Desktop client path for standalone bundled distribution
 if getattr(sys, "frozen", False):
     exe_dir = os.path.dirname(sys.executable)
@@ -46,12 +49,13 @@ if getattr(sys, "frozen", False):
             os.environ["FLET_VIEW_PATH"] = os.path.abspath(cand)
             break
 
-from main import VoiceAlertSystem, check_model_ready, download_model, MODEL_NAME, get_data_dir
+from main import VoiceAlertSystem, check_model_ready, download_model, get_data_dir
 
 # Cross-version compatibility aliases for modern Flet (0.25+ / 0.80+ / 1.0) and legacy Flet
 Colors = getattr(ft, "Colors", getattr(ft, "colors", None))
 Icons = getattr(ft, "Icons", getattr(ft, "icons", None))
 ButtonControl = getattr(ft, "Button", getattr(ft, "ElevatedButton", None))
+
 
 def make_border(color, width=1):
     """Safely creates a border across different Flet versions."""
@@ -61,6 +65,7 @@ def make_border(color, width=1):
         return ft.border.all(width, color)
     return None
 
+
 def make_padding(h=0, v=0):
     """Safely creates symmetric padding across different Flet versions."""
     if hasattr(ft, "Padding") and hasattr(ft.Padding, "symmetric"):
@@ -68,6 +73,7 @@ def make_padding(h=0, v=0):
     elif hasattr(ft, "padding") and hasattr(ft.padding, "symmetric"):
         return ft.padding.symmetric(horizontal=h, vertical=v)
     return h
+
 
 def get_center_alignment():
     """Safely returns center alignment across different Flet versions."""
@@ -77,6 +83,7 @@ def get_center_alignment():
         return ft.alignment.center
     return None
 
+
 def get_base_path():
     if hasattr(sys, "_MEIPASS"):
         return sys._MEIPASS
@@ -84,12 +91,13 @@ def get_base_path():
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.abspath(__file__))
 
+
 def get_asset_path(filename):
     """Locates resource file in bundled dir or local script dir."""
     candidates = [
         os.path.join(get_base_path(), filename),
         os.path.join(os.path.dirname(os.path.abspath(__file__)), filename),
-        filename
+        filename,
     ]
     if hasattr(sys, "_MEIPASS"):
         candidates.append(os.path.join(sys._MEIPASS, filename))
@@ -98,12 +106,13 @@ def get_asset_path(filename):
             return os.path.abspath(path)
     return None
 
+
 def get_asset_bytes(filename):
     """Loads asset as raw bytes to ensure reliable embedding."""
     candidates = [
         os.path.join(get_base_path(), filename),
         os.path.join(os.path.dirname(os.path.abspath(__file__)), filename),
-        filename
+        filename,
     ]
     for path in candidates:
         if os.path.exists(path):
@@ -114,8 +123,10 @@ def get_asset_bytes(filename):
                 pass
     return None
 
+
 def get_config_path():
     return os.path.join(get_data_dir(), "config.json")
+
 
 def load_saved_config():
     path = get_config_path()
@@ -127,19 +138,20 @@ def load_saved_config():
             pass
     return {}
 
+
 def save_user_config(token, chat_id, proxy, keywords, lang):
     path = get_config_path()
     try:
         with open(path, "w", encoding="utf-8") as f:
-            json.dump({
-                "bot_token": token,
-                "chat_id": chat_id,
-                "proxy": proxy,
-                "keywords": keywords,
-                "lang": lang
-            }, f, ensure_ascii=False, indent=2)
+            json.dump(
+                {"bot_token": token, "chat_id": chat_id, "proxy": proxy, "keywords": keywords, "lang": lang},
+                f,
+                ensure_ascii=False,
+                indent=2,
+            )
     except Exception:
         pass
+
 
 def safe_copy_clipboard(page, text):
     """Safely sets clipboard text across different Flet versions."""
@@ -153,6 +165,7 @@ def safe_copy_clipboard(page, text):
     except Exception:
         pass
     return False
+
 
 # Comprehensive Internationalization Dictionary
 I18N = {
@@ -233,8 +246,9 @@ I18N = {
         "copied": "Copied to clipboard!",
         "err_token_chat": "Error: Telegram Bot Token and Chat ID are required.",
         "err_no_keywords": "Error: At least one keyword is required.",
-    }
+    },
 }
+
 
 def main(page: ft.Page):
     saved_cfg = load_saved_config()
@@ -427,30 +441,30 @@ def main(page: ft.Page):
 
     # Language Toggle Button
     lang_btn_text = ft.Text(t("lang_btn"), size=12, weight=ft.FontWeight.BOLD, color="#58a6ff")
-    
+
     def toggle_language(e):
         nonlocal current_lang
         current_lang = "en" if current_lang == "zh" else "zh"
-        
+
         # Persist language choice
         save_user_config(
             (token_input.value or "").strip(),
             (chat_id_input.value or "").strip(),
             (proxy_input.value or "").strip(),
             (keywords_input.value or "").strip(),
-            current_lang
+            current_lang,
         )
-        
+
         # Update UI texts
         page.title = f"{t('title')} - {t('subtitle')}"
         title_text.value = t("title")
         subtitle_text.value = t("subtitle")
         lang_btn_text.value = t("lang_btn")
-        
+
         # Status text
         is_running = system_holder["instance"] and system_holder["instance"].running
         update_status_badge(bool(is_running), t("status_running") if is_running else t("status_ready"))
-        
+
         # Form labels & hints
         config_title_text.value = t("sys_config")
         token_input.label = t("bot_token_label")
@@ -461,17 +475,17 @@ def main(page: ft.Page):
         proxy_input.hint_text = t("proxy_hint")
         keywords_input.label = t("keywords_label")
         keywords_input.hint_text = t("keywords_hint")
-        
+
         # Action buttons
         start_btn_text.value = t("btn_start")
         stop_btn_text.value = t("btn_stop")
-        
+
         # Terminal headers
         terminal_title_text.value = t("terminal_title")
         copy_icon_btn.tooltip = t("copy_tooltip")
         clear_icon_btn.tooltip = t("clear_tooltip")
         log_counter_text.value = f"{len(log_lines)} {t('log_unit')}"
-        
+
         # Model card
         try:
             model_title_text.value = t("model_section_title")
@@ -486,16 +500,20 @@ def main(page: ft.Page):
             spacing=4,
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
-                ft.Icon(getattr(Icons, "TRANSLATE_ROUNDED", None) or getattr(Icons, "LANGUAGE", None), size=14, color="#58a6ff"),
-                lang_btn_text
-            ]
+                ft.Icon(
+                    getattr(Icons, "TRANSLATE_ROUNDED", None) or getattr(Icons, "LANGUAGE", None),
+                    size=14,
+                    color="#58a6ff",
+                ),
+                lang_btn_text,
+            ],
         ),
         padding=make_padding(h=10, v=6),
         border_radius=20,
         bgcolor="#182333",
         border=make_border("#26456f", 1),
         on_click=toggle_language,
-        tooltip="切换语言 / Switch Language"
+        tooltip="切换语言 / Switch Language",
     )
 
     header_section = ft.Row(
@@ -512,10 +530,7 @@ def main(page: ft.Page):
                     ),
                 ],
             ),
-            ft.Row(
-                spacing=8,
-                controls=[status_badge, lang_switch_container]
-            ),
+            ft.Row(spacing=8, controls=[status_badge, lang_switch_container]),
         ],
     )
 
@@ -583,7 +598,11 @@ def main(page: ft.Page):
                 ft.Row(
                     spacing=8,
                     controls=[
-                        ft.Icon(getattr(Icons, "TUNE_ROUNDED", None) or getattr(Icons, "SETTINGS", None), size=18, color="#58a6ff"),
+                        ft.Icon(
+                            getattr(Icons, "TUNE_ROUNDED", None) or getattr(Icons, "SETTINGS", None),
+                            size=18,
+                            color="#58a6ff",
+                        ),
                         config_title_text,
                     ],
                 ),
@@ -596,7 +615,11 @@ def main(page: ft.Page):
     )
 
     # Model Status and Download Section
-    model_icon = getattr(Icons, "MEMORY_ROUNDED", None) or getattr(Icons, "SUBTITLES_ROUNDED", None) or getattr(Icons, "SETTINGS_VOICE", None)
+    model_icon = (
+        getattr(Icons, "MEMORY_ROUNDED", None)
+        or getattr(Icons, "SUBTITLES_ROUNDED", None)
+        or getattr(Icons, "SETTINGS_VOICE", None)
+    )
     model_title_text = ft.Text(t("model_section_title"), size=14, weight=ft.FontWeight.W_600, color="#e6edf3")
 
     model_status_dot = ft.Container(width=8, height=8, border_radius=4, bgcolor="#f4a261")
@@ -637,7 +660,11 @@ def main(page: ft.Page):
         start_model_download()
 
     model_download_btn = ButtonControl(
-        content=ft.Row([ft.Icon(download_icon, size=16, color="#ffffff"), btn_download_text], spacing=6, alignment=ft.MainAxisAlignment.CENTER),
+        content=ft.Row(
+            [ft.Icon(download_icon, size=16, color="#ffffff"), btn_download_text],
+            spacing=6,
+            alignment=ft.MainAxisAlignment.CENTER,
+        ),
         width=130,
         height=36,
         style=ft.ButtonStyle(
@@ -740,10 +767,7 @@ def main(page: ft.Page):
                         update_model_ui("downloading", percent / 100.0, p_str)
 
             success, res = download_model(
-                proxy=proxy_val,
-                on_progress=on_progress,
-                on_log=log_message,
-                is_cancelled=lambda: not app_is_alive[0]
+                proxy=proxy_val, on_progress=on_progress, on_log=log_message, is_cancelled=lambda: not app_is_alive[0]
             )
 
             if success:
@@ -856,7 +880,9 @@ def main(page: ft.Page):
     stop_btn_text = ft.Text(t("btn_stop"), color="#ffffff", size=14, weight=ft.FontWeight.W_600)
 
     start_btn = ButtonControl(
-        content=ft.Row([ft.Icon(play_icon, color="#ffffff", size=18), start_btn_text], alignment=ft.MainAxisAlignment.CENTER),
+        content=ft.Row(
+            [ft.Icon(play_icon, color="#ffffff", size=18), start_btn_text], alignment=ft.MainAxisAlignment.CENTER
+        ),
         on_click=start_click,
         width=190,
         height=44,
@@ -868,7 +894,9 @@ def main(page: ft.Page):
     )
 
     stop_btn = ButtonControl(
-        content=ft.Row([ft.Icon(stop_icon, color="#ffffff", size=18), stop_btn_text], alignment=ft.MainAxisAlignment.CENTER),
+        content=ft.Row(
+            [ft.Icon(stop_icon, color="#ffffff", size=18), stop_btn_text], alignment=ft.MainAxisAlignment.CENTER
+        ),
         on_click=stop_click,
         disabled=True,
         width=190,
@@ -903,6 +931,7 @@ def main(page: ft.Page):
         safe_copy_clipboard(page, all_text)
         log_counter_text.value = t("copied")
         page.update()
+
         def restore():
             time.sleep(2)
             log_counter_text.value = f"{len(log_lines)} {t('log_unit')}"
@@ -910,13 +939,18 @@ def main(page: ft.Page):
                 page.update()
             except Exception:
                 pass
+
         threading.Thread(target=restore, daemon=True).start()
 
     copy_icon = getattr(Icons, "CONTENT_COPY_ROUNDED", None) or getattr(Icons, "COPY", None)
     clear_icon = getattr(Icons, "DELETE_SWEEP_OUTLINED", None) or getattr(Icons, "CLEAR", None)
 
-    copy_icon_btn = ft.IconButton(icon=copy_icon, icon_size=16, icon_color="#8b949e", tooltip=t("copy_tooltip"), on_click=copy_logs)
-    clear_icon_btn = ft.IconButton(icon=clear_icon, icon_size=16, icon_color="#8b949e", tooltip=t("clear_tooltip"), on_click=clear_logs)
+    copy_icon_btn = ft.IconButton(
+        icon=copy_icon, icon_size=16, icon_color="#8b949e", tooltip=t("copy_tooltip"), on_click=copy_logs
+    )
+    clear_icon_btn = ft.IconButton(
+        icon=clear_icon, icon_size=16, icon_color="#8b949e", tooltip=t("clear_tooltip"), on_click=clear_logs
+    )
 
     log_list_view = ft.ListView(
         spacing=4,
@@ -933,7 +967,11 @@ def main(page: ft.Page):
             ft.Row(
                 spacing=8,
                 controls=[
-                    ft.Icon(getattr(Icons, "TERMINAL_ROUNDED", None) or getattr(Icons, "TERMINAL", None), size=16, color="#58a6ff"),
+                    ft.Icon(
+                        getattr(Icons, "TERMINAL_ROUNDED", None) or getattr(Icons, "TERMINAL", None),
+                        size=16,
+                        color="#58a6ff",
+                    ),
                     terminal_title_text,
                     log_counter_text,
                 ],
@@ -992,11 +1030,13 @@ def main(page: ft.Page):
 
     configure_window()
 
+
 def launch_app():
     if hasattr(ft, "run"):
         ft.run(main)
     elif hasattr(ft, "app"):
         ft.app(target=main)
+
 
 if __name__ == "__main__":
     launch_app()
