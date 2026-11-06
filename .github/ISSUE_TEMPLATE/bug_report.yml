@@ -23,7 +23,7 @@ body:
       description: How can we reproduce the problem? Please provide clear, numbered steps.
       placeholder: |
         1. Launch the app with `python gui.py`
-        2. Enter keywords `help, emergency`
+        2. Enter keywords `帮助, 救命`
         3. Click 'Start Detection'
         4. See error ...
     validations:
