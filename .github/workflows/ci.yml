@@ -1,0 +1,130 @@
+name: Continuous Integration & Security Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Explicit least-privilege permission declaration: read-only access to repository contents
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-audit:
+    name: Code Quality & Security Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff black bandit pip-audit
+
+      - name: Code Formatting & Linting Check
+        run: |
+          black --check --diff .
+          ruff check .
+
+      - name: AST Static Security Analysis (Bandit)
+        run: |
+          bandit -r main.py gui.py notifier.py build.py -ll
+
+      - name: Dependency Vulnerability Audit (pip-audit)
+        run: |
+          pip-audit -r requirements.txt
+
+  cross-platform-matrix:
+    name: Matrix Test (${{ matrix.os }} / Py ${{ matrix.python-version }})
+    needs: lint-and-audit
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install Linux Audio Development Headers
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y portaudio19-dev libasound2-dev
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Module Sanity & Import Verification
+        run: |
+          python -c "import main, gui, notifier; print('Core modules imported successfully!')"
+
+      - name: Key Logic Unit Verification
+        run: |
+          python -c "
+          from notifier import sanitize_telegram_error
+          res = sanitize_telegram_error('https://api.telegram.org/bot123456:ABC-DEF/sendMessage', '123456:ABC-DEF')
+          assert '123456:ABC-DEF' not in res, 'Token sanitization failed!'
+          print('Token sanitization logic verified.')
+          "
+
+  build-smoke-test:
+    name: Windows Standalone Build Smoke Test
+    needs: lint-and-audit
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build Standalone Executable
+        run: |
+          python build.py
+
+      - name: Validate Build Output Structure
+        run: |
+          powershell -Command "
+          $exePath = 'release\VoiceAlert\VoiceAlert.exe'
+          if (-not (Test-Path $exePath)) { throw 'VoiceAlert.exe not generated!' }
+          $voskPath = 'release\VoiceAlert\_internal\vosk'
+          if (-not (Test-Path $voskPath)) { throw 'Vosk dynamic libraries missing in _internal!' }
+          Write-Host 'Build output structure validated successfully.'
+          "
