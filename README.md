@@ -1,23 +1,32 @@
 # Voice Alert System
 
-A real-time voice monitoring application that listens for specific keywords and sends instant alerts via Telegram. Designed for offline use with the Vosk speech recognition engine.
+A lightweight real-time keyword spotting application that listens via your microphone and sends instant notifications via Telegram. Powered by the offline Vosk speech recognition engine—100% on-device, with zero audio retention and zero cloud upload.
+
+一款轻量级的离线语音关键词监控与即时提醒工具。通过麦克风监听声音输入，基于 Vosk 离线语音识别模型在本地实时捕捉自定义关键词并发送 Telegram 通知；音频仅在内存中流式分析，全程不录音、不落盘、不上传云端，充分守护声音隐私。
 
 ## 🚀 Features
 
-- **Real-time Keyword Detection**: continuously listens to microphone input to detect user-defined keywords (supports live streaming partial result detection).
-- **Offline Speech Recognition**: Uses the lightweight and accurate [Vosk](https://alphacephei.com/vosk/) model (automatically downloads and validates the small Chinese model `vosk-model-small-cn-0.22`).
-- **Telegram Integration**: Sends instant notifications to your Telegram chat when a keyword is detected, with connection pooling and credential leakage prevention.
-- **User-Friendly GUI**: Built with [Flet](https://flet.dev/), providing a clean, responsive interface, model advance downloader, and Chinese/English bilingual support.
-- **Log Monitoring**: View real-time logs with high-performance incremental rendering directly in the app.
+- **Real-time Keyword Detection**: Continuously monitors microphone input to spot user-defined keywords with live streaming partial-result detection.
+- **100% Offline Speech Recognition**: Uses the lightweight [Vosk](https://alphacephei.com/vosk/) engine (`vosk-model-small-cn-0.22`), running entirely on-device without external speech APIs.
+- **Instant Alert Notifications**: Dispatches instant alerts to your designated Telegram chat when keywords are detected, featuring connection pooling and token masking.
+- **User-Friendly GUI**: Built with [Flet](https://flet.dev/), providing a clean desktop interface, model downloader with live progress, and Chinese/English bilingual support.
+- **Log Monitoring**: Real-time console log view with token sanitization to prevent credential leaks.
+
+## 🔒 Privacy & Data Security
+
+- **100% On-Device Processing**: Speech recognition runs entirely on your local machine using offline models.
+- **Zero Audio Retention**: Microphone input is processed in volatile memory (RAM) for real-time inference. Audio frames are never saved to disk, recorded, or cached.
+- **Zero Audio Upload**: Only the text notification message is transmitted to Telegram when a keyword triggers. No raw audio data is ever transmitted over the network.
+- **Credential Protection**: Configuration and bot tokens remain local, and are automatically masked in log outputs.
 
 ## 🛠️ Technology Stack
 
-- **[Python](https://www.python.org/)**: Core programming language.
-- **[Flet](https://flet.dev/)**: Framework for building the graphical user interface.
+- **[Python](https://www.python.org/)**: Core application runtime (3.10+).
+- **[Flet](https://flet.dev/)**: Framework for building the cross-platform GUI.
 - **[Vosk](https://alphacephei.com/vosk/)**: Offline speech recognition toolkit.
-- **[PyAudio](https://people.csail.mit.edu/hubert/pyaudio/)**: Library for audio input/output.
-- **[Requests](https://requests.readthedocs.io/)**: HTTP library for sending Telegram API requests (with SOCKS5 proxy support).
-- **[PyInstaller](https://pyinstaller.org/)**: Tool for packaging the application into a standalone executable.
+- **[PyAudio](https://people.csail.mit.edu/hubert/pyaudio/)**: Real-time microphone audio stream capture.
+- **[Requests](https://requests.readthedocs.io/)**: HTTP library for notification delivery.
+- **[PyInstaller](https://pyinstaller.org/)**: Standalone executable packaging.
 
 ## 📋 Prerequisites
 
@@ -27,7 +36,11 @@ A real-time voice monitoring application that listens for specific keywords and 
 
 ## 📦 Installation
 
-1. **Clone the repository** (if applicable) or download the source code.
+1. **Clone the repository** (if applicable) or download the source code:
+   ```bash
+   git clone https://github.com/AndrewWangDev/voice_check.git
+   cd voice_check
+   ```
 
 2. **Install dependencies**:
    ```bash
@@ -42,18 +55,19 @@ A real-time voice monitoring application that listens for specific keywords and 
    python gui.py
    ```
 
-2. **Configure the settings**:
-   - **Telegram Bot Token**: Enter the token provided by @BotFather.
-   - **Chat ID**: Enter your personal or group Chat ID (you can use bots like @userinfobot to find this).
-   - **Keywords**: Enter the keywords you want to monitor, separated by commas (e.g., `帮助, 救命, 报警`). *Note: The default model is `vosk-model-small-cn-0.22` optimized for Chinese speech.*
+2. **Configure settings**:
+   - **Telegram Bot Token**: Enter the bot token obtained from @BotFather.
+   - **Chat ID**: Enter your personal or group Chat ID.
+   - **Keywords**: Enter the keywords to monitor, separated by commas (e.g., `帮助, 救命, 报警`).
+   - **Proxy (Optional)**: If needed for your network environment, configure an HTTP or SOCKS5 proxy (e.g., `http://127.0.0.1:7890` or `socks5://127.0.0.1:1080`). Leave blank if not required.
 
 3. **Start Monitoring**:
    - Click the **Start Detection** (开始监听) button.
-   - The application will check or download the Vosk model and start listening.
-   - The status will change to "Running" and live logs will appear in the log window.
+   - The application checks or downloads the offline Vosk model and begins real-time listening.
+   - When a keyword is spotted, an alert is sent to Telegram and logged in the console.
 
 4. **Stop Monitoring**:
-   - Click the **Stop Detection** (停止监听) button to stop listening.
+   - Click **Stop Detection** (停止监听) to gracefully close the audio stream.
 
 ## 🔨 Building (Optional)
 
@@ -62,8 +76,12 @@ To create a standalone executable:
 ```bash
 python build.py
 ```
-The executable will be generated in the `release/VoiceAlert` folder.
+The executable will be generated in the `release/VoiceAlert` directory.
+
+## ⚠️ Disclaimer
+
+This project is developed and provided strictly for personal development, research, and educational purposes. Users are solely responsible for ensuring compliance with all applicable local laws and regulations regarding audio monitoring and privacy in their jurisdiction.
 
 ## 📄 License
 
-MIT
+This project is open-sourced under the [MIT License](LICENSE).
