@@ -2,7 +2,7 @@
 
 A lightweight real-time keyword spotting application that listens via your microphone and sends instant notifications via Telegram. Powered by the offline Vosk speech recognition engine—100% on-device, with zero audio retention and zero cloud upload.
 
-一款轻量级的离线语音关键词监控与即时提醒工具。通过麦克风监听声音输入，基于 Vosk 离线语音识别模型在本地实时捕捉自定义关键词并发送 Telegram 通知；音频仅在内存中流式分析，全程不录音、不落盘、不上传云端，充分守护声音隐私。
+一款轻量级的离线语音关键词监控与即时提醒工具。通过麦克风监听声音输入，基于 Vosk 离线语音识别模型在本地实时捕捉自定义关键词并发送 Telegram 通知；音频仅在内存中流式分析，全程不录音、不落盘、不上传云端。
 
 ## 🚀 Features
 
@@ -58,7 +58,7 @@ A lightweight real-time keyword spotting application that listens via your micro
 2. **Configure settings**:
    - **Telegram Bot Token**: Enter the bot token obtained from @BotFather.
    - **Chat ID**: Enter your personal or group Chat ID.
-   - **Keywords**: Enter the keywords to monitor, separated by commas (e.g., `帮助, 救命, 报警`).
+   - **Keywords**: Enter the keywords to monitor, separated by commas.
    - **Proxy (Optional)**: If needed for your network environment, configure an HTTP or SOCKS5 proxy (e.g., `http://127.0.0.1:7890` or `socks5://127.0.0.1:1080`). Leave blank if not required.
 
 3. **Start Monitoring**:
@@ -67,7 +67,7 @@ A lightweight real-time keyword spotting application that listens via your micro
    - When a keyword is spotted, an alert is sent to Telegram and logged in the console.
 
 4. **Stop Monitoring**:
-   - Click **Stop Detection** (停止监听) to gracefully close the audio stream.
+   - Click **Stop Detection**  to gracefully close the audio stream.
 
 ## 🔨 Building (Optional)
 
