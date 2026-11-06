@@ -1,0 +1,30 @@
+name: 💡 Feature Proposal
+description: Suggest an idea, architectural improvement, or integration
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an enhancement! Please describe your proposal clearly so the community can discuss it.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Is your proposal related to a current limitation or pain point?
+      placeholder: e.g. Currently, the app only supports Telegram alerts, but our team uses Discord/Slack.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution & Design
+      description: Describe your proposed solution and how it should work.
+      placeholder: A clear, concise overview of the proposed feature or design.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Did you consider alternative designs or workarounds?

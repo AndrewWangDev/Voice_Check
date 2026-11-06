@@ -1,0 +1,50 @@
+name: 🐛 Bug Report
+description: Report an issue, crash, or unexpected behavior
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue! Please check existing issues before submitting.
+        **Important:** Never paste active Telegram Bot Tokens or private credentials into this report.
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: What operating system, Python version, and audio hardware are you using?
+      placeholder: e.g. Windows 11 23H2 / Python 3.11.8 / Realtek Audio Microphone
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce the problem? Please provide clear, numbered steps.
+      placeholder: |
+        1. Launch the app with `python gui.py`
+        2. Enter keywords `help, emergency`
+        3. Click 'Start Detection'
+        4. See error ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened? (e.g. error pop-up, crash, silent failure)
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs or Error Traces
+      description: Paste any console or terminal logs here (ensure Bot Tokens are masked).
+      render: shell

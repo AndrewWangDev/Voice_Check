@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔒 Report a Security Vulnerability
+    url: https://github.com/AndrewWangDev/voice_check/security/advisories/new
+    about: Please report security vulnerabilities privately. We review submissions as promptly as feasible.
+  - name: 💬 GitHub Discussions
+    url: https://github.com/AndrewWangDev/voice_check/discussions
+    about: Ask questions, share architectures, and discuss ideas with the community.
